@@ -1,0 +1,158 @@
+{% extends 'detector/base.html' %}
+
+{% block title %}Home - Lung Cancer Detection{% endblock %}
+
+{% block content %}
+<div class="container-main">
+    <!-- Hero Section -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 mb-3">
+            <i class="fas fa-lungs text-primary"></i>
+            Lung Cancer Detection System
+        </h1>
+        <p class="lead text-muted">
+            AI-Powered Medical Image Analysis for Early Detection
+        </p>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stats-card text-center">
+                <i class="fas fa-images fa-2x mb-2"></i>
+                <h3>{{ total_predictions }}</h3>
+                <p class="mb-0">Total Scans Analyzed</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card text-center">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <h3>95%+</h3>
+                <p class="mb-0">Model Accuracy</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card text-center">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h3>&lt;3s</h3>
+                <p class="mb-0">Average Processing Time</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-5">
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-upload fa-4x text-primary mb-3"></i>
+                    <h4>Upload Scan</h4>
+                    <p class="text-muted">Upload a chest X-ray or CT scan for instant analysis</p>
+                    <a href="{% url 'upload' %}" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload Now
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-history fa-4x text-success mb-3"></i>
+                    <h4>View History</h4>
+                    <p class="text-muted">Review past predictions and analysis results</p>
+                    <a href="{% url 'history' %}" class="btn btn-success">
+                        <i class="fas fa-history"></i> View History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Predictions -->
+    {% if recent_predictions %}
+    <div class="mb-4">
+        <h3 class="mb-4">
+            <i class="fas fa-clock"></i> Recent Predictions
+        </h3>
+        <div class="row">
+            {% for prediction in recent_predictions %}
+            <div class="col-md-6 mb-3">
+                <div class="card prediction-card {{ prediction.predicted_class }}">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-4">
+                                <img src="{{ prediction.image.url }}" alt="Scan" class="img-fluid rounded">
+                            </div>
+                            <div class="col-8">
+                                <h5 class="card-title">
+                                    {% if prediction.predicted_class == 'normal' %}
+                                        <span class="badge bg-success">Normal</span>
+                                    {% elif prediction.predicted_class == 'benign' %}
+                                        <span class="badge bg-warning">Benign</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Malignant</span>
+                                    {% endif %}
+                                </h5>
+                                <p class="mb-2">
+                                    <strong>Confidence:</strong>
+                                    <span class="badge-confidence badge bg-secondary">
+                                        {{ prediction.confidence|floatformat:2 }}%
+                                    </span>
+                                </p>
+                                <p class="text-muted mb-2">
+                                    <small>
+                                        <i class="fas fa-calendar"></i>
+                                        {{ prediction.created_at|date:"M d, Y H:i" }}
+                                    </small>
+                                </p>
+                                <a href="{% url 'result' prediction.pk %}" class="btn btn-sm btn-outline-primary">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Features -->
+    <div class="row mt-5">
+        <div class="col-md-12">
+            <h3 class="mb-4 text-center">
+                <i class="fas fa-star"></i> Key Features
+            </h3>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="text-center">
+                <i class="fas fa-robot fa-3x text-primary mb-3"></i>
+                <h5>AI-Powered</h5>
+                <p class="text-muted">Deep learning models trained on thousands of medical images</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="text-center">
+                <i class="fas fa-bolt fa-3x text-warning mb-3"></i>
+                <h5>Fast Results</h5>
+                <p class="text-muted">Get predictions in seconds with high accuracy</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="text-center">
+                <i class="fas fa-chart-line fa-3x text-success mb-3"></i>
+                <h5>Detailed Analysis</h5>
+                <p class="text-muted">Comprehensive probability scores for all classes</p>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="text-center">
+                <i class="fas fa-shield-alt fa-3x text-info mb-3"></i>
+                <h5>Secure & Private</h5>
+                <p class="text-muted">Your medical data is protected and confidential</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

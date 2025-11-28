@@ -1,0 +1,129 @@
+{% extends 'detector/base.html' %}
+
+{% block title %}Upload Scan - Lung Cancer Detection{% endblock %}
+
+{% block content %}
+<div class="container-main">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <h2 class="mb-4 text-center">
+                <i class="fas fa-upload"></i> Upload Medical Scan
+            </h2>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Instructions:</strong>
+                <ul class="mb-0 mt-2">
+                    <li>Upload a chest X-ray or CT scan image</li>
+                    <li>Supported formats: JPG, PNG</li>
+                    <li>Maximum file size: 10MB</li>
+                    <li>Best results with clear, high-quality images</li>
+                </ul>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" id="uploadForm">
+                {% csrf_token %}
+                
+                <div class="upload-zone mb-4" id="uploadZone">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h4>Click to Upload or Drag & Drop</h4>
+                    <p class="text-muted">Select your medical scan image</p>
+                    {{ form.image }}
+                </div>
+                
+                <div id="previewContainer" class="mb-4" style="display: none;">
+                    <h5>Preview:</h5>
+                    <img id="imagePreview" src="" alt="Preview" class="img-fluid rounded shadow" style="max-height: 400px;">
+                </div>
+                
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    {{ form.errors }}
+                </div>
+                {% endif %}
+                
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                        <i class="fas fa-brain"></i> Analyze Scan
+                    </button>
+                    <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Home
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.querySelector('input[type="file"]');
+    const previewContainer = document.getElementById('previewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Style the file input
+    fileInput.style.display = 'none';
+
+    // Click to upload
+    uploadZone.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // File selection
+    fileInput.addEventListener('change', (e) => {
+        handleFile(e.target.files[0]);
+    });
+
+    // Drag and drop
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = '#3498db';
+        uploadZone.style.background = '#f0f8ff';
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.style.borderColor = '#ddd';
+        uploadZone.style.background = 'white';
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.style.borderColor = '#ddd';
+        uploadZone.style.background = 'white';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFile(files[0]);
+        }
+    });
+
+    function handleFile(file) {
+        if (file) {
+            // Validate file type
+            if (!file.type.match('image.*')) {
+                alert('Please select an image file');
+                return;
+            }
+
+            // Preview image
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                previewContainer.style.display = 'block';
+                submitBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Show loading on submit
+    document.getElementById('uploadForm').addEventListener('submit', () => {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
+        submitBtn.disabled = true;
+    });
+</script>
+{% endblock %}

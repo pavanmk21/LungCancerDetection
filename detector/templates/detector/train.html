@@ -1,0 +1,126 @@
+{% extends 'detector/base.html' %}
+
+{% block title %}Train Model - Lung Cancer Detection{% endblock %}
+
+{% block content %}
+<div class="container-main">
+    <h2 class="mb-4">
+        <i class="fas fa-brain"></i> Train New Model
+    </h2>
+
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Note:</strong> Model training requires properly organized training data in the data/ directory.
+        This process may take several hours depending on your hardware and dataset size.
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Training Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Model Type</label>
+                            {{ form.model_type }}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Epochs</label>
+                            {{ form.epochs }}
+                            <small class="form-text text-muted">Number of training iterations</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Batch Size</label>
+                            {{ form.batch_size }}
+                            <small class="form-text text-muted">Number of images per batch</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Learning Rate</label>
+                            {{ form.learning_rate }}
+                            <small class="form-text text-muted">Optimizer learning rate</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-play"></i> Start Training
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Training History</h5>
+                </div>
+                <div class="card-body">
+                    {% if training_sessions %}
+                    <div class="list-group">
+                        {% for session in training_sessions %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ session.model_type }}</h6>
+                                <small>{{ session.created_at|date:"M d, Y" }}</small>
+                            </div>
+                            <p class="mb-1">
+                                <small>
+                                    Epochs: {{ session.epochs }} | 
+                                    {% if session.final_accuracy %}
+                                    Accuracy: {{ session.final_accuracy|floatformat:2 }}%
+                                    {% endif %}
+                                </small>
+                            </p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">No training history yet</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <h4>Data Preparation Guide</h4>
+        <div class="card">
+            <div class="card-body">
+                <p>Organize your data in the following structure:</p>
+                <pre class="bg-light p-3 rounded"><code>data/
+├── train/
+│   ├── normal/
+│   │   ├── image1.jpg
+│   │   └── image2.jpg
+│   ├── benign/
+│   │   └── ...
+│   └── malignant/
+│       └── ...
+├── val/
+│   ├── normal/
+│   ├── benign/
+│   └── malignant/
+└── test/
+    ├── normal/
+    ├── benign/
+    └── malignant/</code></pre>
+                <p class="mb-0 mt-3">
+                    <strong>Recommended split:</strong> 70% train, 15% validation, 15% test
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+    </div>
+</div>
+{% endblock %}

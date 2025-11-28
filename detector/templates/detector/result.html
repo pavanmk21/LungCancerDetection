@@ -1,0 +1,188 @@
+{% extends 'detector/base.html' %}
+
+{% block title %}Prediction Result - Lung Cancer Detection{% endblock %}
+
+{% block content %}
+<div class="container-main">
+    <h2 class="mb-4 text-center">
+        <i class="fas fa-chart-bar"></i> Prediction Results
+    </h2>
+
+    <div class="row">
+        <!-- Image Display -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-image"></i> Uploaded Scan
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <img src="{{ prediction.image.url }}" alt="Scan" class="img-fluid rounded shadow">
+                    <p class="text-muted mt-3">
+                        <small>
+                            <i class="fas fa-calendar"></i>
+                            Analyzed on {{ prediction.created_at|date:"F d, Y at H:i" }}
+                        </small>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Display -->
+        <div class="col-md-6 mb-4">
+            <!-- Main Prediction -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-brain"></i> AI Prediction
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <h1 class="display-4 mb-3">
+                        {% if prediction.predicted_class == 'normal' %}
+                            <span class="badge bg-success">NORMAL</span>
+                        {% elif prediction.predicted_class == 'benign' %}
+                            <span class="badge bg-warning">BENIGN</span>
+                        {% else %}
+                            <span class="badge bg-danger">MALIGNANT</span>
+                        {% endif %}
+                    </h1>
+                    <h3 class="mb-4">
+                        Confidence: 
+                        <span class="text-primary">{{ prediction.confidence|floatformat:2 }}%</span>
+                    </h3>
+                    
+                    {% if prediction.predicted_class == 'normal' %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i>
+                        <strong>Good News!</strong> No signs of abnormalities detected.
+                    </div>
+                    {% elif prediction.predicted_class == 'benign' %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Attention:</strong> Benign abnormality detected. Consult with a physician.
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <strong>Important:</strong> Potential malignancy detected. Immediate medical consultation recommended.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Probability Chart -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie"></i> Class Probabilities
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="probabilityChart"></canvas>
+                    
+                    <div class="mt-4">
+                        {% for class_name, prob in probabilities.items %}
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-capitalize">{{ class_name }}</span>
+                                <strong>{{ prob|floatformat:2 }}%</strong>
+                            </div>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar 
+                                    {% if class_name == 'normal' %}bg-success
+                                    {% elif class_name == 'benign' %}bg-warning
+                                    {% else %}bg-danger{% endif %}"
+                                    role="progressbar" 
+                                    style="width: {{ prob|floatformat:2 }}%"
+                                    aria-valuenow="{{ prob }}" 
+                                    aria-valuemin="0" 
+                                    aria-valuemax="100">
+                                    {{ prob|floatformat:1 }}%
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="alert alert-info mt-4">
+        <h5><i class="fas fa-info-circle"></i> Medical Disclaimer</h5>
+        <p class="mb-0">
+            This AI system is designed to assist medical professionals and should not be used as a sole diagnostic tool. 
+            Always consult with qualified healthcare providers for proper diagnosis and treatment. 
+            The predictions are based on computer vision analysis and should be verified by radiologists.
+        </p>
+    </div>
+
+    <!-- Actions -->
+    <div class="row mt-4">
+        <div class="col-md-4 mb-2">
+            <a href="{% url 'upload' %}" class="btn btn-primary w-100">
+                <i class="fas fa-plus"></i> Analyze Another Scan
+            </a>
+        </div>
+        <div class="col-md-4 mb-2">
+            <a href="{% url 'history' %}" class="btn btn-secondary w-100">
+                <i class="fas fa-history"></i> View All Results
+            </a>
+        </div>
+        <div class="col-md-4 mb-2">
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary w-100">
+                <i class="fas fa-home"></i> Back to Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const chartData = {{ chart_data|safe }};
+    
+    const ctx = document.getElementById('probabilityChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: chartData.labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+            datasets: [{
+                data: chartData.data,
+                backgroundColor: [
+                    '#27ae60',  // Normal - Green
+                    '#f39c12',  // Benign - Orange
+                    '#e74c3c'   // Malignant - Red
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        font: {
+                            size: 14
+                        }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' + context.parsed.toFixed(2) + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
